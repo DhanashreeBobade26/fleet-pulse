@@ -1,172 +1,243 @@
-
 # Fleet Pulse – Real-Time Ops Dashboard
 
-## Project Overview
+## 1. Project Overview
 
-Fleet Pulse is a real-time operations dashboard that monitors service health and performance metrics.
+Fleet Pulse is a real-time operations dashboard for monitoring service health and performance.
 
-The application provides:
-- Live service monitoring.
-- Real-time metrics using WebSocket and Server-Sent Events (SSE).
-- HTTP polling as a fallback.
-- Service details and historical charts.
-- Alert rules and incident monitoring.
-- Authentication and role-based access.
+Features include:
+- Live fleet service monitoring
+- WebSocket, Server-Sent Events (SSE), and HTTP polling transports
+- Service details and historical charts
+- Alert rules and incident monitoring
+- JWT authentication and role-based access control
 
-## Project Structure
+## 2. Technology Stack
 
-```text
-Technical Assignment/
-├── README.md
-├── backend/
-└── fleet-pulse/
-    └── frontend/
-```
-
-## Technology Stack
-
-### Frontend
+**Frontend**
 - Angular 21
 - TypeScript
 - Angular Material
 - RxJS
-- Chart.js
-- ng2-charts
+- Chart.js and ng2-charts
 
-### Backend
-- Node.js
+**Backend**
+- Node.js 20
 - Express.js
 - WebSocket
-- Server-Sent Events (SSE)
+- Server-Sent Events
 - REST APIs
-- JWT Authentication
+- JWT authentication
 
-## Prerequisites
+## 3. Project Structure
 
-Install the following:
-- Node.js
+```text
+Technical Assignment/
+├── backend/
+│   ├── middleware/
+│   ├── routes/
+│   ├── services/
+│   ├── .env.example
+│   ├── Dockerfile
+│   ├── package.json
+│   └── server.js
+├── fleet-pulse/
+│   └── frontend/
+│       ├── src/
+│       ├── Dockerfile
+│       ├── package.json
+│       └── angular.json
+├── docker-compose.yml
+└── README.md
+```
+
+## 4. Prerequisites
+
+For local development:
+- Node.js 20
 - npm
-- Angular CLI
+- Angular CLI compatible with the project
 
-## Setup Instructions
+For containerized execution:
+- Docker
+- Docker Compose
 
-### 1. Backend
+## 5. Setup Instructions
 
-Open a terminal:
+### Backend
+
+From the repository root:
 
 ```bash
 cd backend
-npm install
+npm ci
+```
+
+Create a local `.env` file using `.env.example` as a template. Replace the example JWT secrets with your own values.
+
+Start the backend:
+
+```bash
 npm start
 ```
 
-Backend runs at:
+Backend URL: `http://localhost:4000`
 
-http://localhost:4000
+WebSocket endpoint: `ws://localhost:4000/stream`
 
-### 2. Frontend
+SSE endpoint: `http://localhost:4000/stream/sse`
 
-Open another terminal:
+### Frontend
+
+Open another terminal from the repository root:
 
 ```bash
 cd fleet-pulse/frontend
-npm install
+npm ci
 npm start
 ```
 
-Open the application:
+Frontend URL: `http://localhost:4200`
 
-http://localhost:4200
+### Docker Compose
 
-## Demo Login
+From the repository root, first create `backend/.env` using `backend/.env.example` and configure your own secrets.
+
+Then run:
+
+```bash
+docker compose up --build
+```
+
+Frontend: `http://localhost:4200`
+
+Backend: `http://localhost:4000`
+
+To stop the containers:
+
+```bash
+docker compose down
+```
+
+## 6. Demo Login
 
 **Operator**
-- Email: operator@pulse.dev
-- Password: pulse123
+- Email: `operator@pulse.dev`
+- Password: `pulse123`
 
 **Viewer**
-- Email: viewer@pulse.dev
-- Password: pulse123
+- Email: `viewer@pulse.dev`
+- Password: `pulse123`
 
-## Resilience Implementation
+Use these only with the local mock backend.
+
+## 7. Architecture
+
+```text
+                 Angular Frontend
+                        |
+                 Authentication
+                        |
+                 Fleet Dashboard
+                        |
+                Stream Service
+                        |
+          +-------------+-------------+
+          |             |             |
+       WebSocket       SSE        HTTP Polling
+       Primary       Fallback      Fallback
+          |             |             |
+          +-------------+-------------+
+                        |
+                 Event Processing
+                        |
+             Ordering and Deduplication
+                        |
+                Signals / UI Updates
+                        |
+              Dashboard and Charts
+```
+
+The backend provides REST APIs, streaming endpoints, authentication, and mock service data.
+
+## 8. Resilience Decisions
 
 ### R1 – Real-Time Transport Resilience
 
-The application uses a fallback transport strategy:
-
-1. WebSocket is the primary connection.
-2. SSE is used when WebSocket fails.
-3. HTTP polling is used when SSE also fails.
-4. The application periodically attempts to restore a higher-priority connection.
-5. Reconnection uses exponential backoff and jitter.
-6. Browser offline and online events are handled.
-7. Stale connection status is displayed when metrics stop arriving.
+The transport strategy prioritizes:
+1. WebSocket as the primary connection.
+2. SSE as the fallback transport.
+3. HTTP polling when streaming transports are unavailable.
+4. Reconnection attempts with backoff.
+5. Browser online/offline handling.
 
 ### R2 – Event Ordering and Recovery
 
-- Global event offsets are tracked.
-- Duplicate events are detected.
-- Out-of-order events are buffered.
-- Missing events are recovered using the replay API.
-- Snapshot reload is used when replay history expires.
-- Malformed events are counted and logged.
+The stream processing logic handles:
+- Global event offsets and sequence tracking
+- Duplicate event detection
+- Out-of-order event handling
+- Replay requests for missing events
+- Snapshot recovery when replay history is unavailable
+- Malformed event handling
 
 ### R3 – HTTP Resilience
 
-- HTTP requests have a timeout.
-- Retry logic is implemented for eligible requests.
-- Retry delays use exponential backoff.
-- Retry-After is respected for HTTP 429 responses.
-- POST requests are retried only when an Idempotency-Key is present.
+HTTP resilience includes:
+- Request timeout handling
+- Retry handling for eligible requests
+- Backoff between retries
+- Retry-After handling for HTTP 429 responses
+- Protection against unsafe POST retries
 
 ### R4 – Historical Chart Failure Isolation
 
-- Historical chart loading is handled separately from service details.
-- Chart errors are displayed inside the chart section.
-- A Retry button allows historical metrics to be requested again.
-- Service information remains available when historical chart loading fails.
+Historical chart loading is handled separately from the main service details. Chart errors can be displayed independently, with a retry option, so chart failures do not need to interrupt the rest of the detail view.
 
-## Testing
+## 9. Testing and Verification
 
-The following scenarios were manually tested:
+Verified during development:
+- Angular production build completes successfully.
+- Backend starts successfully on port 4000.
+- Frontend starts successfully on port 4200.
+- Login succeeds and opens the application.
 
-| Scenario | Expected behavior |
-|---|---|
-| WebSocket disabled | Application falls back to SSE |
-| WebSocket and SSE disabled | Application falls back to polling |
-| WebSocket restored | Application attempts to reconnect |
-| Missing event offsets | Replay is requested |
-| Duplicate events | Duplicate counter increases |
-| Malformed events | Malformed counter increases without crashing |
-| Historical API failure | Chart error and Retry button are displayed |
-| Historical API restored | Charts load successfully |
+The assignment's full failure-drill matrix and performance requirements have not been comprehensively measured. They should be considered outstanding verification rather than claimed as fully passed.
 
-## Performance
+## 10. Performance
 
-Performance measurements should be added after testing with the required load and browser throttling.
+The production build generated an initial bundle of approximately 630.17 kB (raw size).
 
-## Architecture Decisions and Trade-offs
+Angular reported that the configured initial bundle budget of 500 kB was exceeded by approximately 130.18 kB.
 
-- WebSocket is preferred for real-time communication.
-- SSE provides a simpler fallback transport.
-- HTTP polling provides an additional recovery mechanism.
-- Event buffering helps maintain global event ordering.
-- Historical chart data is reduced to limit chart rendering overhead.
-- Retry logic is restricted to eligible requests to avoid unnecessary duplicate operations.
+The required 2,000-services / 2,000-events-per-second test under 4x CPU throttling has not been measured. No FPS or long-task performance result is claimed.
 
-## AI Usage
+## 11. Mock Backend
+
+The backend is a Node.js and Express-based mock service.
+
+It provides authentication, REST endpoints, WebSocket and SSE streaming, and mock data for frontend development and resilience testing.
+
+Environment configuration is supplied through `backend/.env`. A safe template is provided in `backend/.env.example`.
+
+## 12. Trade-offs and Limitations
+
+- The backend is a mock implementation intended for the assignment.
+- Performance under the full required load has not been benchmarked.
+- The complete failure-drill matrix has not been independently verified.
+- The Angular initial bundle exceeds the configured 500 kB budget.
+- Production deployment, monitoring, and infrastructure hardening are outside the scope of this mock implementation.
+
+## 13. AI Usage
 
 AI assistance was used during development for:
-- Understanding assignment requirements.
-- Debugging frontend and backend issues.
-- Reviewing resilience logic.
-- Improving error handling.
-- Testing and troubleshooting.
+- Understanding assignment requirements
+- Debugging frontend and backend issues
+- Reviewing implementation approaches
+- Improving error handling
+- Troubleshooting and documentation
 
-All implementation and testing decisions were reviewed during development.
+Implementation decisions and final changes were reviewed during development.
 
 ---
 
-## Author
-
-Fleet Pulse – Real-Time Ops Dashboard
+**Project:** Fleet Pulse – Real-Time Ops Dashboard
