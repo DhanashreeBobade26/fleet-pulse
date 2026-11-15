@@ -1,0 +1,40 @@
+<section class="incident-panel">
+    <div class="panel-header">
+        <h2>Alert Incidents</h2>
+        <button type="button" (click)="enableNotifications()">
+            Enable Notifications
+        </button>
+        <span class="incident-count">
+            {{ alertEngine.incidents().length }}
+        </span>
+    </div>
+
+    @if (alertEngine.incidents().length === 0) {
+    <p class="empty-message">No incidents yet. Monitoring live metrics...</p>
+    } @else {
+    <div class="incident-list">
+        @for (incident of alertEngine.incidents(); track incident.id) {
+        <article class="incident-card">
+            <div class="incident-details">
+                <h3>{{ incident.ruleName }}</h3>
+                <p>{{ incident.message }}</p>
+                <small>Service: {{ incident.serviceId }}</small>
+                <small>
+                    Triggered: {{ incident.triggeredAt | date:'medium' }}
+                </small>
+
+                @if (incident.status === 'resolved') {
+                <span class="resolved-label">Resolved</span>
+                } @else {
+                <span class="active-label">Active</span>
+                }
+            </div>
+
+            <button type="button" (click)="alertEngine.dismissIncident(incident.id)">
+                Dismiss
+            </button>
+        </article>
+        }
+    </div>
+    }
+</section>

@@ -12,6 +12,10 @@
         <span class="status-dot"></span>
         {{ connectionStatus }}
       </span>
+
+      <button class="logout-button" (click)="logout()">
+        Logout
+      </button>
     </div>
   </header>
 
@@ -171,7 +175,8 @@
 
             <td>
               <span class="status-badge" [class.healthy]="service.status === 'healthy'"
-                [class.warning]="service.status === 'warning'" [class.critical]="service.status === 'critical'">
+                [class.warning]="service.status === 'warning'" [class.critical]="service.status === 'critical'"
+                [class.status-flash]="flashingServices.has(service.id)">
                 {{ service.status | titlecase }}
               </span>
             </td>
@@ -210,5 +215,7 @@
   </section>
 
   }
+  <!-- Alert Incidents -->
+  <app-incident-panel />
 
 </div>

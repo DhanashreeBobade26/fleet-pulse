@@ -17,10 +17,10 @@ export class Auth {
   private readonly apiUrl = 'http://localhost:4000/auth';
 
   private accessToken: string | null = null;
-
+  private loggedOut = false;
   currentUser = signal<User | null>(null);
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(
@@ -29,6 +29,7 @@ export class Auth {
       { withCredentials: true }
     ).pipe(
       tap(response => {
+        this.loggedOut = false;
         this.accessToken = response.accessToken;
         this.currentUser.set(response.user);
       })
@@ -49,22 +50,22 @@ export class Auth {
   }
 
   restoreSession(): Observable<void> {
-  return this.refreshAccessToken().pipe(
-    map(() => undefined),
-    catchError(() => {
-      this.accessToken = null;
-      this.currentUser.set(null);
-      return of(undefined);
-    })
-  );
-}
+    return this.refreshAccessToken().pipe(
+      map(() => undefined),
+      catchError(() => {
+        this.accessToken = null;
+        this.currentUser.set(null);
+        return of(undefined);
+      })
+    );
+  }
 
   getAccessToken(): string | null {
     return this.accessToken;
   }
 
   isLoggedIn(): boolean {
-    return this.accessToken !== null;
+    return !this.loggedOut && this.accessToken !== null;
   }
 
   hasRole(role: 'operator' | 'viewer'): boolean {
@@ -72,6 +73,9 @@ export class Auth {
   }
 
   logout(): void {
+    this.loggedOut = true;
+    this.accessToken = null;
+    this.currentUser.set(null);
     this.http.post(
       `${this.apiUrl}/logout`,
       {},

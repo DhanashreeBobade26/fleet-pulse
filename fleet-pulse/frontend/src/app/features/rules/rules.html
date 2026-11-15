@@ -1,0 +1,314 @@
+
+<div class="rules-page">
+
+  <h2>Alert Rules</h2>
+
+  <!-- Create/Edit form: Operator only -->
+  <section class="form-card" *ngIf="isOperator">
+
+    <h3>{{ editingRuleId ? 'Edit Alert Rule' : 'Create Alert Rule' }}</h3>
+
+    <form [formGroup]="form" (ngSubmit)="saveRule()">
+
+      <!-- Rule Name -->
+      <div class="form-group">
+        <label for="ruleName">Rule Name</label>
+
+        <input
+          id="ruleName"
+          type="text"
+          formControlName="name"
+          placeholder="Enter rule name"
+        />
+
+        <small
+          class="error"
+          *ngIf="form.controls.name.touched && form.controls.name.hasError('required')">
+          Rule name is required.
+        </small>
+
+        <small
+          class="error"
+          *ngIf="form.controls.name.hasError('maxlength')">
+          Maximum 60 characters allowed.
+        </small>
+
+        <small
+          class="error"
+          *ngIf="form.controls.name.hasError('duplicateName')">
+          This rule name already exists.
+        </small>
+
+        <small *ngIf="form.controls.name.pending">
+          Checking rule name...
+        </small>
+      </div>
+
+      <!-- Warning and Critical Thresholds -->
+      <div class="threshold-section">
+
+        <h3>Alert Threshold Settings</h3>
+
+        <div class="form-group">
+          <label for="warningThreshold">Warning Threshold</label>
+
+          <input
+            id="warningThreshold"
+            type="number"
+            formControlName="warningThreshold"
+            min="0"
+          />
+
+          <small
+            class="error"
+            *ngIf="form.controls.warningThreshold.touched &&
+            form.controls.warningThreshold.hasError('required')">
+            Warning threshold is required.
+          </small>
+
+          <small
+            class="error"
+            *ngIf="form.controls.warningThreshold.touched &&
+            form.controls.warningThreshold.hasError('min')">
+            Warning threshold cannot be negative.
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="criticalThreshold">Critical Threshold</label>
+
+          <input
+            id="criticalThreshold"
+            type="number"
+            formControlName="criticalThreshold"
+            min="0"
+          />
+
+          <small
+            class="error"
+            *ngIf="form.controls.criticalThreshold.touched &&
+            form.controls.criticalThreshold.hasError('required')">
+            Critical threshold is required.
+          </small>
+
+          <small
+            class="error"
+            *ngIf="form.controls.criticalThreshold.touched &&
+            form.controls.criticalThreshold.hasError('min')">
+            Critical threshold cannot be negative.
+          </small>
+        </div>
+
+        <p
+          class="error"
+          *ngIf="form.hasError('invalidThresholdComparison') &&
+          (form.controls.warningThreshold.touched ||
+          form.controls.criticalThreshold.touched)">
+          Warning threshold must be lower than critical threshold.
+        </p>
+
+      </div>
+
+      <!-- Dynamic Conditions -->
+      <div formArrayName="conditions">
+
+        <div
+          class="condition-card"
+          *ngFor="let condition of conditions.controls; let i = index"
+          [formGroupName]="i">
+
+          <div class="condition-heading">
+            <h4>Condition {{ i + 1 }}</h4>
+
+            <button
+              type="button"
+              class="remove-button"
+              *ngIf="conditions.length > 1"
+              (click)="removeCondition(i)">
+              Remove
+            </button>
+          </div>
+
+          <!-- Metric -->
+          <div class="form-group">
+            <label>Metric</label>
+
+            <select formControlName="metric">
+              <option
+                *ngFor="let metric of metrics"
+                [value]="metric.value">
+                {{ metric.label }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Operator -->
+          <div class="form-group">
+            <label>Operator</label>
+
+            <select formControlName="operator">
+              <option
+                *ngFor="let operator of operators"
+                [value]="operator">
+                {{ operator }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Condition Threshold -->
+          <div class="form-group">
+            <label>Threshold</label>
+
+            <input
+              type="number"
+              formControlName="threshold"
+              min="0"
+            />
+
+            <small
+              class="error"
+              *ngIf="condition.controls.threshold.touched &&
+              condition.controls.threshold.hasError('required')">
+              Condition threshold is required.
+            </small>
+
+            <small
+              class="error"
+              *ngIf="condition.hasError('thresholdOutOfRange')">
+              Error rate must be between 0 and 100.
+            </small>
+
+            <small
+              class="error"
+              *ngIf="condition.hasError('invalidThreshold')">
+              Enter a valid non-negative threshold.
+            </small>
+
+            <small
+              class="error"
+              *ngIf="condition.controls.threshold.touched &&
+              condition.controls.threshold.hasError('min')">
+              Threshold cannot be negative.
+            </small>
+          </div>
+
+          <!-- Duration -->
+          <div class="form-group">
+            <label>Duration (seconds)</label>
+
+            <input
+              type="number"
+              formControlName="durationSec"
+              min="0"
+              step="1"
+            />
+
+            <small
+              class="error"
+              *ngIf="condition.controls.durationSec.touched &&
+              condition.controls.durationSec.hasError('required')">
+              Duration is required.
+            </small>
+
+            <small
+              class="error"
+              *ngIf="condition.controls.durationSec.touched &&
+              condition.controls.durationSec.hasError('invalidDuration')">
+              Duration must be a non-negative whole number.
+            </small>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="addCondition()">
+        + Add Condition
+      </button>
+
+      <button
+        type="submit"
+        class="primary-button"
+        [disabled]="saving || form.invalid || form.pending">
+        {{ saving ? 'Saving...' : (editingRuleId ? 'Update Rule' : 'Create Rule') }}
+      </button>
+
+      <button
+        *ngIf="editingRuleId"
+        type="button"
+        class="secondary-button"
+        (click)="cancelEdit()">
+        Cancel Edit
+      </button>
+
+    </form>
+
+    <!-- Status Messages -->
+    <p class="success" *ngIf="successMessage">
+      {{ successMessage }}
+    </p>
+
+    <p class="error" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </p>
+
+  </section>
+
+  <!-- Viewer Information -->
+  <p *ngIf="!isOperator">
+    You have read-only access to alert rules.
+  </p>
+
+  <!-- Existing Rules: Both Roles -->
+  <section class="rules-list">
+
+    <div class="list-heading">
+      <h3>Existing Rules</h3>
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="loadRules()">
+        Refresh Rules
+      </button>
+    </div>
+
+    <p *ngIf="loading">
+      Loading rules...
+    </p>
+
+    <p *ngIf="!loading && rules.length === 0">
+      No alert rules created yet.
+    </p>
+
+    <div
+      class="rule-card"
+      *ngFor="let rule of rules">
+
+      <h3>{{ rule.name }}</h3>
+
+      <div *ngFor="let condition of rule.conditions">
+        <p>
+          {{ condition.metric }}
+          {{ condition.operator }}
+          {{ condition.threshold }}
+          (Duration: {{ condition.durationSec }} seconds)
+        </p>
+      </div>
+
+      <button
+        *ngIf="isOperator"
+        type="button"
+        class="secondary-button"
+        (click)="editRule(rule)">
+        Edit
+      </button>
+
+    </div>
+
+  </section>
+
+</div>

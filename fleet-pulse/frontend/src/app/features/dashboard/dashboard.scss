@@ -294,3 +294,45 @@ table {
 .clickable-row:hover {
   background-color: #f0fdfa;
 }
+
+.logout-button {
+  padding: 9px 18px;
+  margin-left: 18px;
+  border: 1px solid #fca5a5;
+  border-radius: 7px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: #b91c1c;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 3px;
+  }
+}
+.status-flash {
+  animation: statusFlash 700ms ease-in-out;
+}
+
+@keyframes statusFlash {
+  0% {
+    outline: 2px solid transparent;
+    transform: scale(1);
+  }
+
+  35% {
+    outline: 2px solid #ff9800;
+    transform: scale(1.08);
+  }
+
+  100% {
+    outline: 2px solid transparent;
+    transform: scale(1);
+  }
+}

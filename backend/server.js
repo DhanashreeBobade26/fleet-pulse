@@ -10,6 +10,7 @@ const servicesRoutes = require('./routes/services.routes');
 const streamRoutes = require('./routes/stream.routes');
 const metricsRoutes = require('./routes/metrics.routes');
 const chaosRoutes = require('./routes/chaos.routes');
+const rulesRoutes = require('./routes/rules.routes');
 const { getChaosSettings } = require('./routes/chaos.routes');
 const { attachMetricStream } = require('./services/stream.service');
 
@@ -65,6 +66,7 @@ app.use('/services', servicesRoutes);
 app.use('/stream', streamRoutes);
 app.use('/metrics', metricsRoutes);
 app.use('/chaos', chaosRoutes);
+app.use('/rules', rulesRoutes);
 // Create HTTP server.
 const server = http.createServer(app);
 

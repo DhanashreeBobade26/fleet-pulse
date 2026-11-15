@@ -421,13 +421,18 @@ export class Stream {
       clearTimeout(this.sseRetryTimer);
       this.sseRetryTimer = null;
     }
+
     if (this.eventSource) {
       this.eventSource.close();
       this.eventSource = null;
     }
-
-    this.connectionStatus.set('offline');
   }
+
+  private getPollingIntervalMs(): number {
+    // Assignment requirement: HTTP polling every 2 seconds.
+    return 2000;
+  }
+
 
   startPolling(): void {
     // Avoid starting multiple polling subscriptions.
@@ -439,7 +444,10 @@ export class Stream {
 
     this.connectionStatus.set('polling');
 
-    this.pollingSubscription = timer(0, 2000)
+    this.pollingSubscription = timer(
+      0,
+      this.getPollingIntervalMs()
+    )
       .pipe(
         switchMap(() =>
           this.http.get<SnapshotResponse>(
@@ -522,7 +530,19 @@ export class Stream {
         (Date.now() - this.lastMetricAt) / 1000;
 
       if (secondsSinceLastEvent >= 10) {
-        this.connectionStatus.set('stale');
+        if (status !== 'stale') {
+          console.warn('Metric stream is stale. No events received for 10 seconds.');
+          this.connectionStatus.set('stale');
+        }
+
+        // Close a silent WebSocket so its reconnect/fallback
+        // logic can take over.
+        if (
+          this.socket &&
+          this.socket.readyState === WebSocket.OPEN
+        ) {
+          this.socket.close();
+        }
       }
     }, 1000);
   }

@@ -1,0 +1,42 @@
+
+<div class="settings-container">
+
+  <h2>Settings</h2>
+  <p>Configure your Fleet Pulse dashboard preferences.</p>
+
+<form #settingsForm="ngForm" (ngSubmit)="saveSettings()">
+    <div class="form-group">
+      <label for="refreshInterval">Refresh Interval (seconds)</label>
+
+      <input
+        type="number"
+        id="refreshInterval"
+        name="refreshInterval"
+        [(ngModel)]="refreshInterval"
+        required
+        min="5"
+        max="60"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="theme">Dashboard Theme</label>
+
+      <select
+        id="theme"
+        name="theme"
+        [(ngModel)]="theme"
+        required
+      >
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </div>
+
+    <button type="submit" [disabled]="settingsForm.invalid">
+      Save Settings
+    </button>
+
+  </form>
+
+</div>

@@ -17,6 +17,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Stream } from '../../core/services/stream';
 import { MetricEvent } from '../../core/models/metric-event.model';
 import { Subscription } from 'rxjs';
+import { Auth } from '../../core/auth/auth';
+import { IncidentPanel } from '../incident-panel/incident-panel';
 
 type SortField = 'p95' | 'errRate' | 'rps';
 
@@ -26,7 +28,8 @@ type SortField = 'p95' | 'errRate' | 'rps';
   imports: [
     CommonModule,
     MatCardModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    IncidentPanel
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
@@ -37,7 +40,10 @@ export class Dashboard implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly stream = inject(Stream);
+  private readonly auth = inject(Auth);
+  flashingServices = new Set<string>();
 
+  private flashTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
   get duplicateEventCount(): number {
     return this.stream.duplicateEventCount();
   }
@@ -171,8 +177,31 @@ export class Dashboard implements OnInit, OnDestroy {
           return;
         }
 
+        const previousService = this.services[index];
+
+        if (previousService.status !== event.status) {
+          this.updateStatusCount(previousService.status, -1);
+          this.updateStatusCount(event.status, 1);
+
+          this.flashingServices.add(event.serviceId);
+
+          const existingTimeout = this.flashTimeouts.get(event.serviceId);
+
+          if (existingTimeout) {
+            clearTimeout(existingTimeout);
+          }
+
+          const timeout = setTimeout(() => {
+            this.flashingServices.delete(event.serviceId);
+            this.flashTimeouts.delete(event.serviceId);
+            this.cdr.markForCheck();
+          }, 700);
+
+          this.flashTimeouts.set(event.serviceId, timeout);
+        }
+
         this.services[index] = {
-          ...this.services[index],
+          ...previousService,
           p95: event.p95,
           errRate: event.errRate,
           rps: event.rps,
@@ -316,7 +345,35 @@ export class Dashboard implements OnInit, OnDestroy {
     this.goToPage(this.currentPage + 1);
   }
 
+  private updateStatusCount(
+    status: Service['status'],
+    change: number
+  ): void {
+    switch (status) {
+      case 'healthy':
+        this.healthyCount += change;
+        break;
+
+      case 'warning':
+        this.warningCount += change;
+        break;
+
+      case 'critical':
+        this.criticalCount += change;
+        break;
+    }
+  }
+
+  logout(): void {
+    this.auth.logout();
+    this.router.navigate(['/login']);
+  }
+
   ngOnDestroy(): void {
     this.metricSubscription?.unsubscribe();
+
+    this.flashTimeouts.forEach(timeout => clearTimeout(timeout));
+    this.flashTimeouts.clear();
+    this.flashingServices.clear();
   }
 }
