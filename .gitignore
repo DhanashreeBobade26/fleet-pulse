@@ -1,0 +1,14 @@
+
+# Environment secrets
+backend/.env
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Angular build files
+fleet-pulse/frontend/dist/
+fleet-pulse/frontend/.angular/
+
+# Logs
+*.log

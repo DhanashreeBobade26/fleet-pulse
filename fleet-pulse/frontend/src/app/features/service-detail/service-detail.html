@@ -1,0 +1,130 @@
+<div class="detail-container">
+
+    <!-- Header -->
+    <header class="detail-header">
+        <div>
+            <h1>Service Details</h1>
+            <p>Individual service performance overview</p>
+        </div>
+
+        <button class="back-button" (click)="goBack()">
+            ← Back to Dashboard
+        </button>
+    </header>
+
+    <!-- Loading -->
+    @if (loading) {
+    <div class="loading-container">
+        <p>Loading service details...</p>
+    </div>
+    }
+
+    <!-- Error -->
+    @if (errorMessage) {
+    <div class="error-message">
+        {{ errorMessage }}
+    </div>
+    }
+
+    <!-- Service Information -->
+    @if (service && !loading) {
+    <section class="service-info-card">
+
+        <div class="service-title">
+            <div>
+                <h2>{{ service.name }}</h2>
+                <p>{{ service.id }}</p>
+            </div>
+
+            <span class="status-badge" [class.healthy]="service.status === 'healthy'"
+                [class.warning]="service.status === 'warning'" [class.critical]="service.status === 'critical'">
+                {{ service.status | titlecase }}
+            </span>
+        </div>
+
+        <div class="metrics-grid">
+
+            <div class="metric-card">
+                <p>P95 Latency</p>
+                <h3>{{ service.p95 | number:'1.1-2' }} ms</h3>
+            </div>
+
+            <div class="metric-card">
+                <p>Error Rate</p>
+                <h3>{{ service.errRate | number:'1.1-2' }}%</h3>
+            </div>
+
+            <div class="metric-card">
+                <p>Requests / Sec</p>
+                <h3>{{ service.rps | number:'1.0-0' }}</h3>
+            </div>
+
+        </div>
+
+        <div class="updated-info">
+            Last updated:
+            {{ service.updatedAt | date:'medium' }}
+        </div>
+
+    </section>
+    }
+
+    <!-- Historical Metrics Charts -->
+    <section class="charts-section">
+
+        <h2>Historical Metrics (Last 15 Minutes)</h2>
+
+        @if (historyLoading) {
+        <div class="loading-message">
+            Loading historical metrics...
+        </div>
+        }
+
+        @if (historyError) {
+        <div class="error-message">
+            <p>{{ historyError }}</p>
+            <button class="back-button" (click)="retryHistory()">
+                Retry
+            </button>
+        </div>
+        }
+
+        @if (!historyLoading && !historyError && historyPoints.length === 0) {
+        <div class="empty-message">
+            No historical metrics available.
+        </div>
+        }
+
+        @if (!historyLoading && !historyError && historyPoints.length > 0) {
+        <div class="charts-grid">
+
+            <div class="chart-card">
+                <h3>P95 Latency</h3>
+                <div class="chart-container">
+                    <canvas baseChart [type]="'line'" [data]="p95ChartData" [options]="chartOptions">
+                    </canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Error Rate</h3>
+                <div class="chart-container">
+                    <canvas baseChart [type]="'line'" [data]="errorChartData" [options]="chartOptions">
+                    </canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Requests Per Second (RPS)</h3>
+                <div class="chart-container">
+                    <canvas baseChart [type]="'line'" [data]="rpsChartData" [options]="chartOptions">
+                    </canvas>
+                </div>
+            </div>
+
+        </div>
+        }
+
+    </section>
+
+</div>

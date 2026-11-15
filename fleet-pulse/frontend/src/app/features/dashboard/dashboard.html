@@ -1,0 +1,214 @@
+<div class="dashboard-container">
+
+  <!-- Dashboard Header -->
+  <header class="dashboard-header">
+    <div>
+      <h1>Fleet Pulse</h1>
+      <p>Real-Time Operations Dashboard</p>
+    </div>
+
+    <div class="header-actions">
+      <span class="connection-status">
+        <span class="status-dot"></span>
+        {{ connectionStatus }}
+      </span>
+    </div>
+  </header>
+
+  <!-- Welcome Section -->
+  <section class="welcome-section">
+    <div>
+      <h2>Service Overview</h2>
+      <p>Monitor your fleet services and performance.</p>
+    </div>
+
+    <button class="refresh-button" (click)="loadServices()" [disabled]="loading">
+      Refresh
+    </button>
+  </section>
+
+  <!-- Loading -->
+  @if (loading) {
+  <div class="loading-container">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading services...</p>
+  </div>
+  }
+
+  <!-- Error -->
+  @if (errorMessage) {
+  <div class="error-message">
+    {{ errorMessage }}
+    <button (click)="loadServices()" [disabled]="loading">
+      Retry
+    </button>
+  </div>
+  }
+
+  <!-- Dashboard Content -->
+  @if (!loading && !errorMessage) {
+  <!-- R2 Debug Counters -->
+  <section class="summary-grid">
+    <mat-card class="summary-card">
+      <div class="card-label">Duplicate Events</div>
+      <div class="card-value">{{ duplicateEventCount }}</div>
+    </mat-card>
+
+    <mat-card class="summary-card">
+      <div class="card-label">Malformed Events</div>
+      <div class="card-value">{{ malformedEventCount }}</div>
+    </mat-card>
+  </section>
+  <!-- Summary Cards -->
+  <section class="summary-grid">
+
+    <mat-card class="summary-card total-card">
+      <div class="card-label">Total Services</div>
+      <div class="card-value">{{ totalServices }}</div>
+    </mat-card>
+
+    <mat-card class="summary-card healthy-card">
+      <div class="card-label">Healthy</div>
+      <div class="card-value">{{ healthyCount }}</div>
+    </mat-card>
+
+    <mat-card class="summary-card warning-card">
+      <div class="card-label">Warning</div>
+      <div class="card-value">{{ warningCount }}</div>
+    </mat-card>
+
+    <mat-card class="summary-card critical-card">
+      <div class="card-label">Critical</div>
+      <div class="card-value">{{ criticalCount }}</div>
+    </mat-card>
+
+  </section>
+
+  <!-- Services Section -->
+  <section class="services-section">
+
+    <div class="section-heading">
+      <div>
+        <h2>Services</h2>
+        <p>
+          Showing {{ startRecord }}–{{ endRecord }}
+          of {{ sortedServices.length }} matching services
+        </p>
+      </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="table-controls">
+
+      <div class="search-control">
+        <label for="serviceSearch">Search services</label>
+
+        <input id="serviceSearch" type="text" placeholder="Search by service ID or name..." [value]="searchTerm"
+          (input)="onSearchChange($any($event.target).value)" />
+      </div>
+
+      <div class="filter-control">
+        <label for="statusFilter">Filter by status</label>
+
+        <select id="statusFilter" [value]="selectedStatus" (change)="onStatusChange($any($event.target).value)">
+          <option value="all">All Statuses</option>
+          <option value="healthy">Healthy</option>
+          <option value="warning">Warning</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
+
+    </div>
+
+    <!-- Services Table -->
+    <div class="table-wrapper">
+      <table>
+
+        <thead>
+          <tr>
+            <th>Service ID</th>
+            <th>Service Name</th>
+
+            <th>
+              <button class="sort-button" (click)="sortBy('p95')">
+                P95 Latency
+                @if (sortField === 'p95') {
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                }
+              </button>
+            </th>
+
+            <th>
+              <button class="sort-button" (click)="sortBy('errRate')">
+                Error Rate
+                @if (sortField === 'errRate') {
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                }
+              </button>
+            </th>
+
+            <th>
+              <button class="sort-button" (click)="sortBy('rps')">
+                Requests / Sec
+                @if (sortField === 'rps') {
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                }
+              </button>
+            </th>
+
+            <th>Status</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (service of paginatedServices; track service.id) {
+          <tr class="clickable-row" (click)="openService(service.id)">
+            <td>{{ service.id }}</td>
+            <td>{{ service.name }}</td>
+            <td>{{ service.p95 | number:'1.1-2' }} ms</td>
+            <td>{{ service.errRate | number:'1.1-2' }}%</td>
+            <td>{{ service.rps | number:'1.0-0' }}</td>
+
+            <td>
+              <span class="status-badge" [class.healthy]="service.status === 'healthy'"
+                [class.warning]="service.status === 'warning'" [class.critical]="service.status === 'critical'">
+                {{ service.status | titlecase }}
+              </span>
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="6">No matching services found.</td>
+          </tr>
+          }
+        </tbody>
+
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+
+      <span class="pagination-info">
+        Page {{ currentPage }} of {{ totalPages }}
+      </span>
+
+      <div class="pagination-actions">
+
+        <button class="page-button" (click)="previousPage()" [disabled]="currentPage === 1">
+          Previous
+        </button>
+
+        <button class="page-button" (click)="nextPage()" [disabled]="currentPage >= totalPages">
+          Next
+        </button>
+
+      </div>
+
+    </div>
+
+  </section>
+
+  }
+
+</div>

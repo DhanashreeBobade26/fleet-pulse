@@ -1,0 +1,296 @@
+
+.dashboard-container {
+  min-height: 100vh;
+  padding: 28px 36px;
+  background: #f1f5f9;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: #172b43;
+  color: white;
+  border-radius: 12px;
+
+  h1 {
+    margin: 0;
+    font-size: 25px;
+  }
+
+  p {
+    margin: 5px 0 0;
+    color: #cbd5e1;
+    font-size: 13px;
+  }
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #22c55e;
+}
+
+.welcome-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 28px 0 20px;
+
+  h2 {
+    margin: 0;
+    color: #1e293b;
+  }
+
+  p {
+    margin: 5px 0 0;
+    color: #64748b;
+    font-size: 13px;
+  }
+}
+
+.refresh-button {
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 7px;
+  background: #0f766e;
+  color: white;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.summary-card {
+  padding: 22px;
+  border-radius: 10px;
+  border-left: 4px solid #64748b;
+}
+
+.card-label {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.card-value {
+  margin-top: 12px;
+  color: #1e293b;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.healthy-card {
+  border-left-color: #16a34a;
+}
+
+.warning-card {
+  border-left-color: #d97706;
+}
+
+.critical-card {
+  border-left-color: #dc2626;
+}
+
+.services-section {
+  padding: 24px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+}
+
+.section-heading {
+  margin-bottom: 18px;
+
+  h2 {
+    margin: 0;
+    color: #1e293b;
+    font-size: 19px;
+  }
+
+  p {
+    margin: 5px 0 0;
+    color: #64748b;
+    font-size: 13px;
+  }
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  white-space: nowrap;
+
+  th,
+  td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 13px;
+  }
+
+  th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+  }
+
+  td {
+    color: #334155;
+  }
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+
+  &.healthy {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  &.warning {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  &.critical {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px;
+  color: #64748b;
+}
+
+.error-message {
+  padding: 20px;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 8px;
+}
+
+@media (max-width: 900px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-container {
+    padding: 16px;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.table-controls {
+  display: flex;
+  align-items: end;
+  gap: 18px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.search-control,
+.filter-control {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.search-control {
+  flex: 1;
+  min-width: 240px;
+}
+
+.filter-control {
+  min-width: 190px;
+}
+
+.search-control label,
+.filter-control label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.search-control input,
+.filter-control select {
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: white;
+  color: #334155;
+  font-size: 14px;
+  outline: none;
+}
+
+.search-control input:focus,
+.filter-control select:focus {
+  border-color: #0f8b8d;
+  box-shadow: 0 0 0 2px rgba(15, 139, 141, 0.12);
+}
+
+.sort-button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sort-button:hover {
+  color: #0f8b8d;
+}
+
+@media (max-width: 600px) {
+  .table-controls {
+    align-items: stretch;
+  }
+
+  .search-control,
+  .filter-control {
+    width: 100%;
+  }
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background-color: #f0fdfa;
+}
